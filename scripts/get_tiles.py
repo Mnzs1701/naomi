@@ -5,7 +5,7 @@ import numpy as np
 import requests
 import math
 import cv2
-
+import sys
 from io import BytesIO
 from PIL import Image
 
@@ -77,6 +77,8 @@ def createImageMask(img):
     color2 = np.asarray([255, 255, 255])   # UL
 
     mask = cv2.inRange(img, color1, color2)
+    np.set_printoptions(threshold=sys.maxsize)
+
     return cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
 
 
@@ -96,6 +98,7 @@ if __name__ == '__main__':
     print(cx,cy)
     mask[cy:cy+10,cx:cx+10] = (255,0,0)
     mask[cy:cy+10,cx:cx+10] = (0,255,0)
+    print(mask.shape)
     plt.imshow(mask)
     # plt.imshow(a)
     plt.show()

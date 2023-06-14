@@ -11,10 +11,16 @@ from io import BytesIO
 from PIL import Image
 from nav_msgs.msg import Odometry
 
-def tile_meter_to_pixel(meter,latitude = 13.02631):
+def compute_dist_constant(zoom_level = 19,latitude = 13.02631):
     latitude_in_rad = latitude * np.pi / 180
-    resolution = 0.299 * np.cos(latitude_in_rad) # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
-    pixel = int(meter / resolution)
+    dconst = 40075016.686/(2**(zoom_level+8))* np.cos(latitude_in_rad) # According to https://wiki.openstreetmap.org/wiki/Zoom_levels
+    return dconst
+
+def tile_meter_to_pixel(meter):
+    # resolution = 0.2908986275853943 # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
+    resolution = 0.3 # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
+
+    pixel = math.floor(meter / resolution)
     return pixel
 
 def move_origin(px,py,orx,ory):
@@ -87,6 +93,7 @@ def createImageMask(img):
     color2 = np.asarray([255, 255, 255])   # UL
 
     mask = cv2.inRange(img, color1, color2)
+    print(mask)
     return cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
 
 def odom_cb(data):
@@ -96,9 +103,13 @@ def odom_cb(data):
     ros_x = data.pose.pose.position.x
     ros_y = data.pose.pose.position.y
 
-    map_x,map_y = ros_to_map_frame(np.array([ros_x,ros_y,0]))
+    map_x,map_y = ros_x, -ros_y #ros_to_map_frame(np.array([ros_x,ros_y,0]))
     px_x, px_y = tile_meter_to_pixel(map_x),tile_meter_to_pixel(map_y) 
     moved_px, moved_py = move_origin(px_x ,px_y,cx,cy)
+    mask[moved_py-2:moved_py+2,moved_px-2:moved_px + 2] = (0,0,255)
+    plt.imshow(mask)
+    plt.pause(0.05)
+
 
 
 if __name__ == '__main__':
@@ -118,9 +129,12 @@ if __name__ == '__main__':
     fig = plt.figure()
     fig.patch.set_facecolor('white')
     mask = createImageMask(np.asarray(a))
+    sub = rospy.Subscriber('/lio_sam/mapping/odometry',Odometry,odom_cb)
     print(cx,cy)
     mask[cy:cy+10,cx:cx+10] = (255,0,0)
     mask[cy:cy+10,cx:cx+10] = (0,255,0)
+    plt.figure(figsize = (256,256))
+
     plt.imshow(mask)
     # plt.imshow(a)
     plt.show()
