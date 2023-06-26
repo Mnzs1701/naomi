@@ -142,8 +142,8 @@ class GPS_PF_ROS:
 
     def __init__(self) -> None:
         # Aerospace Bridge Corner 13.02631, 77.56317
-        init_gps_lat = 13.02631
-        init_gps_long = 77.56317
+        init_gps_lat = 13.02631  #13.02631
+        init_gps_long = 77.56318  #77.56317
 
         # Aerospace Plane Corner 13.02596, 77.5639
         # init_gps_lat = 13.02596
