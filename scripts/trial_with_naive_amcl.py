@@ -142,11 +142,11 @@ class GPS_PF_ROS:
 
     def __init__(self) -> None:
         # Aerospace Bridge Corner 13.02631, 77.56317
-        init_gps_lat = 13.02631  #13.02631
-        init_gps_long = 77.56318  #77.56317
+        init_gps_lat =  13.02435 #13.0244987 #13.0244987  #13.02631
+        init_gps_long = 77.56332 #77.564222 #77.5647412  #77.56317
 
         # Aerospace Plane Corner 13.02596, 77.5639
-        # init_gps_lat = 13.02596
+        # init_gps_lat  = 13.02596
         # init_gps_long = 77.5639
         
         a, self.cx, self.cy = getImageCluster(init_gps_lat,init_gps_long, 0.0015,  0.0015, 19)
