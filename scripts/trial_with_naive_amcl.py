@@ -103,9 +103,9 @@ def getImageCluster(lat_deg, lon_deg, delta_lat,  delta_long, zoom):
 
     origin_x, origin_y = int((xact%1)*256) ,255+ int((yact%1)*256) 
 
-    Cluster = Image.new('RGB',((xmax-xmin+1)*256-1,(ymax-ymin+1)*256-1) ) 
-    for xtile in range(xmin, xmax+1):
-        for ytile in range(ymin,  ymax+1):
+    Cluster = Image.new('RGB',((xmax-xmin+ 1)*256-1,(ymax-ymin+ 1)*256-1) ) 
+    for xtile in range(xmin, xmax+ 1):
+        for ytile in range(ymin,  ymax+ 1):
             try:
                 imgurl=smurl.format(zoom, xtile, ytile)
                 # print("Opening: " + imgurl)
@@ -122,13 +122,13 @@ def getImageCluster(lat_deg, lon_deg, delta_lat,  delta_long, zoom):
 def createImageMask(img):
     color1 = np.asarray([0, 0, 255])   # LL
     color2 = np.asarray([255, 255, 255])   # UL
-
+    SCALE_CONST = (2048/img.shape[0]) 
     mask = cv2.inRange(img, color1, color2)
-    mask = cv2.resize(mask.astype(np.uint8), dsize=(2044, 2044), interpolation=cv2.INTER_LINEAR)
-    mask = cv2.medianBlur(mask,31)
+    mask = cv2.resize(mask.astype(np.uint8), dsize=(2048, 2048), interpolation=cv2.INTER_LINEAR)
+    mask = cv2.medianBlur(mask,11)
     # mask = cv2.medianBlur(mask,81)
     processed_mask = process_mask(mask)
-    return processed_mask
+    return processed_mask, SCALE_CONST
 
 def process_mask(masked):
     # np.set_printoptions(threshold=sys.maxsize)
@@ -149,10 +149,10 @@ class GPS_PF_ROS:
         # init_gps_lat = 13.02596
         # init_gps_long = 77.5639
         
-        a, self.cx, self.cy = getImageCluster(init_gps_lat,init_gps_long, 0.0005,  0.0005, 19)
+        a, self.cx, self.cy = getImageCluster(init_gps_lat,init_gps_long, 0.0015,  0.0015, 19)
         self.mask = np.zeros((5110,5110),dtype=np.int8)
 
-        self.mask = createImageMask(np.asarray(a))
+        self.mask, SCALE_CONST = createImageMask(np.asarray(a))
 
         # scale(self.mask,mini_mask,10)
         
@@ -160,9 +160,10 @@ class GPS_PF_ROS:
         self.pub = rospy.Publisher('map',OccupancyGrid,queue_size=1)
 
         self.mapinfo = MapMetaData()
-        self.mapinfo.resolution = 0.075
-        self.mapinfo.origin.position.x = -int(self.cx*0.3)
-        self.mapinfo.origin.position.y = -int((512 - self.cy)*0.3)
+        self.mapinfo.resolution = 0.3/SCALE_CONST                            # 0.3 from dist const and 1/4 from rescaling
+        self.mapinfo.origin.position.x = -int(self.cx*0.3)           # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
+        self.mapinfo.origin.position.y = -int((512   - self.cy)*0.3) # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
+        
         self.loop_rate = rospy.Rate(0.1)
 
         self.br = tf2_ros.TransformBroadcaster()
