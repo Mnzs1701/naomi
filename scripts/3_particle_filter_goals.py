@@ -18,6 +18,8 @@ from sensor_msgs.msg import NavSatFix
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
 from pyroutelib3 import Router # Import the router
+from visualization_msgs.msg import Marker
+
 
 def translate_xy(origin,point):
     ox, oy = origin
@@ -136,6 +138,7 @@ class GpsGoal():
     self.originx, self.originy = get_origin_xy()
     self.originheading =  get_compass_heading()
 
+    self.marker_pub = rospy.Publisher("/visualization_marker", Marker, queue_size = 2)
 
     rospy.Subscriber('gps_goal_pose', PoseStamped, self.gps_goal_pose_callback)
     rospy.Subscriber('gnss', NavSatFix, self.gps_goal_fix_callback)
@@ -162,7 +165,7 @@ class GpsGoal():
         rospy.loginfo("Planned route successfully...Starting Execution...")
         routeLatLons = list(map(self.router.nodeLatLon, self.route)) # Get actual route coordinates
         last_point = (self.originlat,self.originlong) #routeLatLons[0]
-        for point in routeLatLons: #routeLatLons[1:]:
+        for point in routeLatLons: 
             map_x , map_y = calc_goal(last_point[0],last_point[1],point[0],point[1])
             rospy.logwarn("Going to position %d %d on base_link frame",map_x,map_y)
 
@@ -201,11 +204,42 @@ class GpsGoal():
     self.currrentx = data.pose.pose.position.x
     self.currrenty = data.pose.pose.position.y
 
+  def publish_marker(self, x, y, z, quat, frame):
+    marker = Marker()
 
-  def publish_goal(self, x=0, y=0, z=0, yaw=0, roll=0, pitch=0):
+    marker.header.frame_id = frame
+    marker.header.stamp = rospy.Time.now()
+
+    # set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3
+    marker.type = 1
+    marker.id = 0
+
+    # Set the scale of the marker
+    marker.scale.x = 2.0
+    marker.scale.y = 2.0
+    marker.scale.z = 2.0
+
+    # Set the color
+    marker.color.r = 0.0
+    marker.color.g = 1.0
+    marker.color.b = 0.0
+    marker.color.a = 1.0
+
+    # Set the pose of the marker
+    marker.pose.position.x = x
+    marker.pose.position.y = y
+    marker.pose.position.z = z
+    marker.pose.orientation.x = quat[0]
+    marker.pose.orientation.y = quat[1]
+    marker.pose.orientation.z = quat[2]
+    marker.pose.orientation.w = quat[3]
+
+    self.marker_pub.publish(marker)
+
+  def publish_goal(self, x=0, y=0, z=0, yaw=0, roll=0, pitch=0, frame="odom"):
     # Create move_base goal
     goal = MoveBaseGoal()
-    goal.target_pose.header.frame_id = "odom" #rospy.get_param('~frame_id','map')
+    goal.target_pose.header.frame_id = frame
     goal.target_pose.pose.position.x = x
     goal.target_pose.pose.position.y = y
     goal.target_pose.pose.position.z =  z
@@ -214,19 +248,19 @@ class GpsGoal():
     goal.target_pose.pose.orientation.y = quaternion[1]
     goal.target_pose.pose.orientation.z = quaternion[2]
     goal.target_pose.pose.orientation.w = quaternion[3]
+
     rospy.loginfo('Executing move_base goal to position (x,y) %s, %s, with %s degrees yaw.' %
             (x, y, yaw))
     rospy.loginfo("To cancel the goal: 'rostopic pub -1 /move_base/cancel actionlib_msgs/GoalID -- {}'")
 
+    self.publish_marker(x,y,z,quaternion,frame)
+    
     # Send goal
     self.move_base.send_goal(goal)
     rospy.loginfo('Inital goal status: %s' % GoalStatus.to_string(self.move_base.get_state()))
     status = self.move_base.get_goal_status_text()
     if status:
       rospy.loginfo(status)
-    # plt.scatter(x,y)
-    # plt.pause(0.1)
-    # Wait for goal result
     self.move_base.wait_for_result()
     rospy.loginfo('Final goal status: %s' % GoalStatus.to_string(self.move_base.get_state()))
     status = self.move_base.get_goal_status_text()
@@ -257,11 +291,5 @@ def ros_main():
 
 
 if __name__ == '__main__':
-    # plt.ion()
-    # fig, ax = plt.subplots()
-    # x, y = [0],[0]
-    # sc = ax.scatter(x,y)
-    # plt.xlim(-100,100)
-    # plt.ylim(-100,100)
     ros_main()
     
