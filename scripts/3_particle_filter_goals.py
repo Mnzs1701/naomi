@@ -129,20 +129,19 @@ class GpsGoal():
   def __init__(self):
     rospy.init_node('gps_goal')
 
-    rospy.loginfo("Connecting to move_base...")
-    self.move_base = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-    self.move_base.wait_for_server()
-    rospy.loginfo("Connected.")
+    self.debug = False
+
+    if self.debug == False:
+      rospy.loginfo("Connecting to move_base...")
+      self.move_base = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+      self.move_base.wait_for_server()
+      rospy.loginfo("Connected.")
 
     self.originlat, self.originlong = get_origin_lat_long()
     self.originx, self.originy = get_origin_xy()
     self.originheading =  get_compass_heading()
 
     self.marker_pub = rospy.Publisher("/visualization_marker", Marker, queue_size = 2)
-
-    rospy.Subscriber('gps_goal_pose', PoseStamped, self.gps_goal_pose_callback)
-    rospy.Subscriber('gnss', NavSatFix, self.gps_goal_fix_callback)
-    rospy.Subscriber('lio_sam/mapping/odometry', Odometry, self.odometry_callback)
 
     # Start a pyroute3 instance
     self.router = Router("car","IISc_Map.osm") # Vehicle type and map 
@@ -169,21 +168,22 @@ class GpsGoal():
             map_x , map_y = calc_goal(last_point[0],last_point[1],point[0],point[1])
             rospy.logwarn("Going to position %d %d on base_link frame",map_x,map_y)
 
-            self.tf_listener_.waitForTransform("base_link", "dynamic_z_map", rospy.Time(), rospy.Duration(4.0))
-            t = self.tf_listener_.getLatestCommonTime("base_link", "dynamic_z_map")
-            # position, quaternion = self.tf_listener_.lookupTransform("base_link", "map", t)
+            self.tf_listener_.waitForTransform("base_link", "map", rospy.Time(), rospy.Duration(4.0))
+            t = self.tf_listener_.getLatestCommonTime("base_link", "map")
 
             p1 = PointStamped()
             p1.header.frame_id = "base_link"
             p1.point.x = map_x
             p1.point.y = -map_y
             p1.point.z = 0
-            p_in_odom = self.tf_listener_.transformPoint("dynamic_z_map", p1)
+            p_in_odom = self.tf_listener_.transformPoint("map", p1)
             planned_waypoints.append((p_in_odom.point.x,p_in_odom.point.y))
             rospy.logwarn("Going to position %d %d on map frame",p_in_odom.point.x,p_in_odom.point.y)
         
         for (p_x,p_y) in planned_waypoints:
-            self.publish_goal(p_x, p_y, z=z, yaw=yaw, roll=roll, pitch=pitch)
+            self.publish_goal(p_x, p_y, 0, 0, 0, 0,"map")
+            if self.debug:
+               input("Go to next point?")
 
 
   def gps_goal_pose_callback(self, data):
@@ -238,34 +238,35 @@ class GpsGoal():
 
   def publish_goal(self, x=0, y=0, z=0, yaw=0, roll=0, pitch=0, frame="odom"):
     # Create move_base goal
-    goal = MoveBaseGoal()
-    goal.target_pose.header.frame_id = frame
-    goal.target_pose.pose.position.x = x
-    goal.target_pose.pose.position.y = y
-    goal.target_pose.pose.position.z =  z
     quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-    goal.target_pose.pose.orientation.x = quaternion[0]
-    goal.target_pose.pose.orientation.y = quaternion[1]
-    goal.target_pose.pose.orientation.z = quaternion[2]
-    goal.target_pose.pose.orientation.w = quaternion[3]
-
-    rospy.loginfo('Executing move_base goal to position (x,y) %s, %s, with %s degrees yaw.' %
-            (x, y, yaw))
-    rospy.loginfo("To cancel the goal: 'rostopic pub -1 /move_base/cancel actionlib_msgs/GoalID -- {}'")
-
     self.publish_marker(x,y,z,quaternion,frame)
     
-    # Send goal
-    self.move_base.send_goal(goal)
-    rospy.loginfo('Inital goal status: %s' % GoalStatus.to_string(self.move_base.get_state()))
-    status = self.move_base.get_goal_status_text()
-    if status:
-      rospy.loginfo(status)
-    self.move_base.wait_for_result()
-    rospy.loginfo('Final goal status: %s' % GoalStatus.to_string(self.move_base.get_state()))
-    status = self.move_base.get_goal_status_text()
-    if status:
-      rospy.loginfo(status)
+    if self.debug == False:
+      goal = MoveBaseGoal()
+      goal.target_pose.header.frame_id = frame
+      goal.target_pose.pose.position.x = x
+      goal.target_pose.pose.position.y = y
+      goal.target_pose.pose.position.z =  z
+      goal.target_pose.pose.orientation.x = quaternion[0]
+      goal.target_pose.pose.orientation.y = quaternion[1]
+      goal.target_pose.pose.orientation.z = quaternion[2]
+      goal.target_pose.pose.orientation.w = quaternion[3]
+
+      rospy.loginfo('Executing move_base goal to position (x,y) %s, %s, with %s degrees yaw.' %
+              (x, y, yaw))
+      rospy.loginfo("To cancel the goal: 'rostopic pub -1 /move_base/cancel actionlib_msgs/GoalID -- {}'")
+    
+      # Send goal
+      self.move_base.send_goal(goal)
+      rospy.loginfo('Inital goal status: %s' % GoalStatus.to_string(self.move_base.get_state()))
+      status = self.move_base.get_goal_status_text()
+      if status:
+        rospy.loginfo(status)
+      self.move_base.wait_for_result()
+      rospy.loginfo('Final goal status: %s' % GoalStatus.to_string(self.move_base.get_state()))
+      status = self.move_base.get_goal_status_text()
+      if status:
+        rospy.loginfo(status)
 
 
 def ros_main():
