@@ -80,17 +80,19 @@ def get_origin_lat_long():
   # origin_pose = rospy.wait_for_message('gnss', NavSatFix)
   # origin_lat = origin_pose.latitude #origin_pose.pose.position.y
   # origin_long = origin_pose.longitude  #origin_pose.pose.position.x
-  origin_lat = 13.02631  #13.0270060 #origin_pose.pose.position.y
-  origin_long = 77.56318 #77.5634649  #origin_pose.pose.position.x
+  origin_lat  =  13.02435 #float(13.02448) #13.0270060 #origin_pose.pose.position.y
+  origin_long =  77.56332 #float(77.56417) #77.5634649  #origin_pose.pose.position.x
   rospy.loginfo('Received origin: lat %s, long %s.' % (origin_lat, origin_long))
   return origin_lat, origin_long
 
 def get_origin_xy():
   # Get the lat long coordinates of our map frame's origin which must be publshed on topic /local_xy_origin. We use this to calculate our goal within the map frame.
   rospy.loginfo("Waiting for a message to initialize the origin map location...")
-  origin_pose = rospy.wait_for_message('lio_sam/mapping/odometry', Odometry)
-  x = origin_pose.pose.pose.position.x
-  y = origin_pose.pose.pose.position.y
+  # origin_pose = rospy.wait_for_message('lio_sam/mapping/odometry', Odometry)
+  # x = origin_pose.pose.pose.position.x
+  # y = origin_pose.pose.pose.position.y
+  x = 0 
+  y = 0
   rospy.loginfo('Received origin: x %s, y %s.' % (x, y))
   return x, y
 
@@ -129,7 +131,7 @@ class GpsGoal():
   def __init__(self):
     rospy.init_node('gps_goal')
 
-    self.debug = False
+    self.debug = True
 
     if self.debug == False:
       rospy.loginfo("Connecting to move_base...")
@@ -164,6 +166,11 @@ class GpsGoal():
         rospy.loginfo("Planned route successfully...Starting Execution...")
         routeLatLons = list(map(self.router.nodeLatLon, self.route)) # Get actual route coordinates
         last_point = (self.originlat,self.originlong) #routeLatLons[0]
+
+        print("name,description,latitude,longitude")
+        for k,point in enumerate(routeLatLons):
+            print(k,",wp,",point[0],",",point[1])        
+
         for point in routeLatLons: 
             map_x , map_y = calc_goal(last_point[0],last_point[1],point[0],point[1])
             rospy.logwarn("Going to position %d %d on base_link frame",map_x,map_y)
@@ -173,8 +180,8 @@ class GpsGoal():
 
             p1 = PointStamped()
             p1.header.frame_id = "base_link"
-            p1.point.x = map_x
-            p1.point.y = -map_y
+            p1.point.x = map_y
+            p1.point.y = map_x
             p1.point.z = 0
             p_in_odom = self.tf_listener_.transformPoint("map", p1)
             planned_waypoints.append((p_in_odom.point.x,p_in_odom.point.y))
@@ -183,6 +190,8 @@ class GpsGoal():
         for (p_x,p_y) in planned_waypoints:
             self.publish_goal(p_x, p_y, 0, 0, 0, 0,"map")
             if self.debug:
+               input("Go to next point?")
+            else:
                input("Go to next point?")
 
 
@@ -211,13 +220,13 @@ class GpsGoal():
     marker.header.stamp = rospy.Time.now()
 
     # set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3
-    marker.type = 1
+    marker.type = 2
     marker.id = 0
 
     # Set the scale of the marker
-    marker.scale.x = 2.0
-    marker.scale.y = 2.0
-    marker.scale.z = 2.0
+    marker.scale.x = 3.0
+    marker.scale.y = 3.0
+    marker.scale.z = 3.0
 
     # Set the color
     marker.color.r = 0.0
@@ -283,8 +292,8 @@ def ros_main():
     #     if element['entry_id'] == entry_id:
     #         app_longitude = float(element['field1'])
     #         app_latitude = float(element['field2'])
-    app_latitude = float(13.02448)
-    app_longitude = float(77.56417)
+    app_latitude  = 13.02596 #float(13.02448)
+    app_longitude = 77.5639 #float(77.56417)
         
     gpsGoal = GpsGoal();
     gpsGoal.do_gps_goal(app_latitude,app_longitude)

@@ -160,7 +160,7 @@ class GPS_PF_ROS:
         self.pub = rospy.Publisher('map',OccupancyGrid,queue_size=1)
 
         self.mapinfo = MapMetaData()
-        self.mapinfo.resolution = 0.3/SCALE_CONST                            # 0.3 from dist const and 1/4 from rescaling
+        self.mapinfo.resolution = 0.3/SCALE_CONST                    # 0.3 from dist const and 1/4 from rescaling
         self.mapinfo.origin.position.x = -int(self.cx*0.3)           # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
         self.mapinfo.origin.position.y = -int((512   - self.cy)*0.3) # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
         
@@ -182,39 +182,6 @@ class GPS_PF_ROS:
             self.pub.publish(message)
             self.loop_rate.sleep()
     
-
-    # def odom_cb(self, data):
-    #     ros_x = data.pose.pose.position.x
-    #     ros_y = data.pose.pose.position.y
-
-    #     # map_x,map_y = ros_x, ros_y #Since we are retaining the ros frame format
-    #     # px_x, px_y = tile_meter_to_pixel_2(map_x),tile_meter_to_pixel_2(map_y) 
-    #     # moved_px, moved_py = move_origin(px_x ,px_y,0,0)
-    #     # moved_px, moved_py = move_origin(px_x ,px_y,self.cx,self.cy)
-
-    #     # print(moved_px,moved_py)
-
-    #     self.trans.x = ros_x #moved_px
-    #     self.trans.y = ros_y #moved_py
-    #     self.trans.z = 0
-
-    #     # TODO adjust to real rotation
-    #     self.rot.x = 0
-    #     self.rot.y = 0
-    #     self.rot.z = 0
-    #     self.rot.w = 1
-
-
-    #     mapzTransMsg = TransformStamped()
-    #     mapzTransMsg.transform.translation = self.trans
-    #     mapzTransMsg.transform.rotation = self.rot
-    #     mapzTransMsg.header.stamp = rospy.Time.now()
-    #     mapzTransMsg.header.frame_id ='gps_map'
-    #     mapzTransMsg.child_frame_id = 'laser'
-    #     self.br.sendTransform(mapzTransMsg)
-
-
-
 if __name__ == '__main__':
     rospy.init_node('tilemap_pf',anonymous=True)
     gps_pf = GPS_PF_ROS()
