@@ -110,8 +110,6 @@ def getImageCluster(lat_deg, lon_deg, delta_lat,  delta_long, zoom):
 
 
     origin_x, origin_y =  int((xact%1)*256) , int((yact%1)*256) 
-
-    print((ycur-ymin)*256)
     origin_x = ((xcur-xmin)*256) + origin_x
     origin_y = 256*(ymax-ymin+1) - (((ycur-ymin)*256) + origin_y)
 
@@ -159,12 +157,12 @@ class GPS_PF_ROS:
         # init_gps_long = 77.56317 #77.564222  #77.56332  #77.5647412 
 
         # Aerospace Plane Corner 13.02596, 77.5639
-        # init_gps_lat  = 13.02596
-        # init_gps_long = 77.5639
+        init_gps_lat  = 13.02596
+        init_gps_long = 77.5639
         
         # # RV Civil 
-        init_gps_lat  = 12.92441 
-        init_gps_long = 77.49918
+        # init_gps_lat  = 12.92441 
+        # init_gps_long = 77.49918
         
         a, self.cx, self.cy = getImageCluster(init_gps_lat,init_gps_long, 0.0015,  0.0015, 19)
         self.mask = np.zeros((5110,5110),dtype=np.int8)
@@ -181,7 +179,7 @@ class GPS_PF_ROS:
         self.mapinfo.origin.position.x = -int(self.cx* 0.2908986275853943)           # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
         self.mapinfo.origin.position.y = -int(self.cy* 0.2908986275853943) # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
         
-        self.loop_rate = rospy.Rate(1)
+        self.loop_rate = rospy.Rate(0.1)
 
         self.br = tf2_ros.TransformBroadcaster()
 

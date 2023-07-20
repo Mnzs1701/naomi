@@ -80,8 +80,8 @@ def get_origin_lat_long():
   # origin_pose = rospy.wait_for_message('gnss', NavSatFix)
   # origin_lat = origin_pose.latitude #origin_pose.pose.position.y
   # origin_long = origin_pose.longitude  #origin_pose.pose.position.x
-  origin_lat  =  13.02435 #float(13.02448) #13.0270060 #origin_pose.pose.position.y
-  origin_long =  77.56332 #float(77.56417) #77.5634649  #origin_pose.pose.position.x
+  origin_lat  =  13.02596  #float(13.02448) #13.0270060 #origin_pose.pose.position.y
+  origin_long =  77.5639  #float(77.56417) #77.5634649  #origin_pose.pose.position.x
   rospy.loginfo('Received origin: lat %s, long %s.' % (origin_lat, origin_long))
   return origin_lat, origin_long
 
@@ -292,11 +292,11 @@ def ros_main():
     #     if element['entry_id'] == entry_id:
     #         app_longitude = float(element['field1'])
     #         app_latitude = float(element['field2'])
-    app_latitude  = 13.02596 #float(13.02448)
-    app_longitude = 77.5639 #float(77.56417)
+    goal_latitude  = 13.02435 #float(13.02448)
+    goal_longitude = 77.56332 #float(77.56417)
         
     gpsGoal = GpsGoal();
-    gpsGoal.do_gps_goal(app_latitude,app_longitude)
+    gpsGoal.do_gps_goal(goal_latitude,goal_longitude)
     rospy.spin()
 
 
