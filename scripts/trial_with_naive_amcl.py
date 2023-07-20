@@ -45,8 +45,8 @@ def compute_dist_constant(zoom_level = 19,latitude = 13.02631):
     return dconst
 
 def tile_meter_to_pixel(meter):
-    # resolution = 0.2908986275853943 # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
-    resolution = 0.3 # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
+    resolution = 0.2908986275853943 # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
+    # resolution = 0.3 # According to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
 
     pixel = math.floor(meter / resolution)
     return pixel
@@ -98,12 +98,24 @@ def getImageCluster(lat_deg, lon_deg, delta_lat,  delta_long, zoom):
     # smurl = r"http://a.tile.openstreetmap.org/{0}/{1}/{2}.png"
     smurl = r"http://localhost:8080/wmts/gm_layer/gm_grid/{0}/{1}/{2}.png"
     xact, yact = hddeg2num(lat_deg, lon_deg, zoom)
-    xmin, ymax = deg2num(lat_deg, lon_deg, zoom)
+    xmin, ymax = deg2num(lat_deg - delta_lat, lon_deg - delta_long, zoom)
+    xcur, ycur = deg2num(lat_deg, lon_deg, zoom)
     xmax, ymin = deg2num(lat_deg + delta_lat, lon_deg + delta_long, zoom)
 
-    origin_x, origin_y = int((xact%1)*256) ,255+ int((yact%1)*256) 
+    xmin = xcur - 2
+    ymin = ycur - 2
 
-    Cluster = Image.new('RGB',((xmax-xmin+ 1)*256-1,(ymax-ymin+ 1)*256-1) ) 
+    xmax = xcur + 2
+    ymax = ycur + 2 
+
+
+    origin_x, origin_y =  int((xact%1)*256) , int((yact%1)*256) 
+
+    print((ycur-ymin)*256)
+    origin_x = ((xcur-xmin)*256) + origin_x
+    origin_y = 256*(ymax-ymin+1) - (((ycur-ymin)*256) + origin_y)
+
+    Cluster = Image.new('RGB',((xmax-xmin+ 1)*256,(ymax-ymin+ 1)*256) ) 
     for xtile in range(xmin, xmax+ 1):
         for ytile in range(ymin,  ymax+ 1):
             try:
@@ -111,12 +123,13 @@ def getImageCluster(lat_deg, lon_deg, delta_lat,  delta_long, zoom):
                 # print("Opening: " + imgurl)
                 imgstr = requests.get(imgurl)
                 tile = Image.open(BytesIO(imgstr.content))
-                Cluster.paste(tile, box=((xtile-xmin)*256 ,  (ytile-ymin)*255))
+                Cluster.paste(tile, box=((xtile-xmin)*256 ,  (ytile-ymin)*256))
             except Exception as e: 
                 print(e)
                 print("Couldn't download image")
                 tile = None
-
+    plt.imshow(Cluster)
+    plt.show()
     return Cluster, origin_x, origin_y
 
 def createImageMask(img):
@@ -142,12 +155,16 @@ class GPS_PF_ROS:
 
     def __init__(self) -> None:
         # Aerospace Bridge Corner 13.02631, 77.56317
-        init_gps_lat =  13.02435 #13.0244987 #13.0244987  #13.02631
-        init_gps_long = 77.56332 #77.564222 #77.5647412  #77.56317
+        # init_gps_lat =  13.02631 #13.0244987 #13.02435  #13.0244987 
+        # init_gps_long = 77.56317 #77.564222  #77.56332  #77.5647412 
 
         # Aerospace Plane Corner 13.02596, 77.5639
         # init_gps_lat  = 13.02596
         # init_gps_long = 77.5639
+        
+        # # RV Civil 
+        init_gps_lat  = 12.92441 
+        init_gps_long = 77.49918
         
         a, self.cx, self.cy = getImageCluster(init_gps_lat,init_gps_long, 0.0015,  0.0015, 19)
         self.mask = np.zeros((5110,5110),dtype=np.int8)
@@ -160,11 +177,11 @@ class GPS_PF_ROS:
         self.pub = rospy.Publisher('map',OccupancyGrid,queue_size=1)
 
         self.mapinfo = MapMetaData()
-        self.mapinfo.resolution = 0.3/SCALE_CONST                    # 0.3 from dist const and 1/4 from rescaling
-        self.mapinfo.origin.position.x = -int(self.cx*0.3)           # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
-        self.mapinfo.origin.position.y = -int((512   - self.cy)*0.3) # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
+        self.mapinfo.resolution =  0.2908986275853943/SCALE_CONST                    # 0.3 from dist const and 1/4 from rescaling
+        self.mapinfo.origin.position.x = -int(self.cx* 0.2908986275853943)           # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
+        self.mapinfo.origin.position.y = -int(self.cy* 0.2908986275853943) # 0.3 is based on compute dist constant function According to https://wiki.openstreetmap.org/wiki/Zoom_levels
         
-        self.loop_rate = rospy.Rate(0.1)
+        self.loop_rate = rospy.Rate(1)
 
         self.br = tf2_ros.TransformBroadcaster()
 
