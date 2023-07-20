@@ -84,14 +84,14 @@ def createImageMask(img):
 
 if __name__ == '__main__':
     # Aerospace Bridge Corner 13.02631, 77.56317
-    init_gps_lat = 13.02631
-    init_gps_long = 77.56317
+    # init_gps_lat = 13.02631
+    # init_gps_long = 77.56317
 
     # Aerospace Plane Corner 13.02596, 77.5639
-    # init_gps_lat = 13.02596
-    # init_gps_long = 77.5639
+    init_gps_lat  = 13.02596
+    init_gps_long = 77.5639
 
-    a, cx, cy = getImageCluster(init_gps_lat,init_gps_long, 0.0005,  0.0005, 19)
+    a, cx, cy = getImageCluster(init_gps_lat,init_gps_long, 0.0015,  0.0015, 19)
     fig = plt.figure()
     fig.patch.set_facecolor('white')
     mask = createImageMask(np.asarray(a))

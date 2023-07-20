@@ -1,6 +1,6 @@
 #!usr/bin/env python3
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import requests
 import math
@@ -128,8 +128,8 @@ def getImageCluster(lat_deg, lon_deg, delta_lat,  delta_long, zoom):
                 print(e)
                 print("Couldn't download image")
                 tile = None
-    plt.imshow(Cluster)
-    plt.show()
+    # plt.imshow(Cluster)
+    # plt.show()
     return Cluster, origin_x, origin_y
 
 def createImageMask(img):
