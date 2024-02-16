@@ -120,6 +120,9 @@ docker run -p 8080:8080 -d -t -v ~/mapproxy:/mapproxy danielsnider/mapproxy
 <!-- USAGE EXAMPLES -->
 ## Usage
 
+Robot Setup
+![copernicus](https://github.com/Mnzs1701/naomi/assets/43721824/6e9df660-ac20-4217-83cf-315dd740c966)
+
 Watch some of the demos of the vehicle [here](https://youtu.be/S9IHIZG8YQU?si=RARpwMQrKIiVV4qB)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
