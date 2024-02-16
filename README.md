@@ -127,6 +127,10 @@ Watch some of the demos of the vehicle [here](https://youtu.be/S9IHIZG8YQU?si=RA
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+System architecture
+![Naomi drawio](https://github.com/Mnzs1701/naomi/assets/43721824/9008aae3-b629-47b8-92d1-3956f5fd5a44)
+
+
 Original location of the testing
 
 ![pf_loc](https://github.com/Mnzs1701/naomi/assets/43721824/426cd2a3-2fd1-40e2-a3ab-e7dc3ed06340)
@@ -139,7 +143,7 @@ With the particle filter implemented
 
 https://github.com/Mnzs1701/naomi/assets/43721824/8ba2a7f5-ddb0-4175-a6d6-bce4b987d9fb
 
-
+Further documentation is provided [here](https://drive.google.com/file/d/1w5f-xmZalkNGCKpyGceK2NOm6CGAeIQd/view?usp=sharing)
 
 <!-- ROADMAP -->
 <!-- ## Roadmap
