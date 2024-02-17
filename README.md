@@ -100,10 +100,10 @@ To get a local copy up and running follow these simple example steps.
 ### Prerequisites
 
 The following systems need to be set up and running
-* [LIOSAM](git@github.com:TixiaoShan/LIO-SAM.git)
-* [lane-Detector-ros](git@github.com:Mnzs1701/lane-detector-ros.git)
-* [quick mcl](git@github.com:VorpalBlade/quickmcl.git)
-* docker
+1. [LIOSAM](git@github.com:TixiaoShan/LIO-SAM.git)
+2. [lane-detector-ros](git@github.com:Mnzs1701/lane-detector-ros.git)
+3. [quick mcl](git@github.com:VorpalBlade/quickmcl.git)
+4. docker
 
 ### Installation
 
